@@ -1,0 +1,442 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import '../../data/models/clothing_item.dart';
+import '../../domain/state/wardrobe_state.dart';
+import '../../core/services/ai_service.dart';
+
+class WardrobeScreen extends StatefulWidget {
+  const WardrobeScreen({Key? key}) : super(key: key);
+
+  @override
+  State<WardrobeScreen> createState() => _WardrobeScreenState();
+}
+
+class _HomeScreenCategory {
+  final String label;
+  final IconData icon;
+
+  _HomeScreenCategory(this.label, this.icon);
+}
+
+class _WardrobeScreenState extends State<WardrobeScreen> {
+  String _selectedCategory = 'Tümü';
+  final AIService _aiService = MockAIService();
+
+  final List<String> _categories = [
+    'Tümü',
+    'Tişört',
+    'Gömlek',
+    'Pantolon',
+    'Şort',
+    'Ceket',
+    'Mont',
+    'Ayakkabı',
+    'Aksesuar'
+  ];
+
+  void _showAddClothingDialog() {
+    String mockImgPath = 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500'; // Default black tshirt mockup
+    bool analyzing = false;
+
+    // AI parsed form fields
+    String? category = 'Tişört';
+    String? color = 'Siyah';
+    String? pattern = 'Düz';
+    String? fabric = 'Pamuk';
+    String? season = 'Yaz';
+    String? style = 'Casual';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final theme = Theme.of(context);
+            final isDark = theme.brightness == Brightness.dark;
+
+            return Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              ),
+              padding: EdgeInsets.only(
+                top: 24,
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Yeni Kıyafet Ekle',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Image selector mock
+                    Center(
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 140,
+                            height: 140,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              color: Colors.grey.withOpacity(0.1),
+                              image: DecorationImage(
+                                image: NetworkImage(mockImgPath),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: CircleAvatar(
+                              backgroundColor: theme.primaryColor,
+                              radius: 18,
+                              child: IconButton(
+                                icon: const Icon(Icons.camera_alt, size: 16, color: Colors.black),
+                                onPressed: () {
+                                  // Switch to a blue shirt image mock
+                                  setModalState(() {
+                                    mockImgPath = 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500';
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // AI Scan Button
+                    analyzing
+                        ? Center(
+                            child: SpinKitThreeBounce(
+                              color: theme.primaryColor,
+                              size: 30.0,
+                            ),
+                          )
+                        : ElevatedButton.icon(
+                            onPressed: () async {
+                              setModalState(() => analyzing = true);
+                              
+                              final result = await _aiService.analyzeClothingImage(mockImgPath);
+                              
+                              setModalState(() {
+                                category = result.category;
+                                color = result.color;
+                                pattern = result.pattern;
+                                fabric = result.fabricType;
+                                season = result.season;
+                                style = result.style;
+                                analyzing = false;
+                              });
+                            },
+                            icon: const Icon(Icons.auto_awesome),
+                            label: const Text('Yapay Zeka ile Analiz Et'),
+                          ),
+                    const SizedBox(height: 24),
+
+                    // Classification Form
+                    _buildFormDropdown('Kategori', category, _categories.where((c) => c != 'Tümü').toList(), (val) {
+                      setModalState(() => category = val);
+                    }),
+                    _buildFormDropdown('Renk', color, ['Siyah', 'Beyaz', 'Bej', 'Lacivert', 'Gri', 'Haki', 'Bordo', 'Kırmızı', 'Mavi', 'Sarı'], (val) {
+                      setModalState(() => color = val);
+                    }),
+                    _buildFormDropdown('Desen', pattern, ['Düz', 'Çizgili', 'Kareli', 'Desenli', 'Baskılı'], (val) {
+                      setModalState(() => pattern = val);
+                    }),
+                    _buildFormDropdown('Kumaş Türü', fabric, ['Pamuk', 'Keten', 'Denim', 'Deri', 'Yün', 'Süet'], (val) {
+                      setModalState(() => fabric = val);
+                    }),
+                    _buildFormDropdown('Mevsim', season, ['Yaz', 'Kış', 'İlkbahar/Sonbahar', 'Mevsimsiz'], (val) {
+                      setModalState(() => season = val);
+                    }),
+                    _buildFormDropdown('Stil', style, ['Casual', 'Smart Casual', 'Klasik', 'Spor'], (val) {
+                      setModalState(() => style = val);
+                    }),
+
+                    const SizedBox(height: 32),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        final newItem = ClothingItem(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          imagePath: mockImgPath,
+                          category: category!,
+                          color: color!,
+                          pattern: pattern!,
+                          fabricType: fabric!,
+                          season: season!,
+                          style: style!,
+                        );
+
+                        Provider.of<WardrobeState>(context, listen: false).addItem(newItem);
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Gardıroba Ekle'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildFormDropdown(String label, String? value, List<String> options, ValueChanged<String?> onChanged) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<String>(
+            value: value,
+            items: options.map((opt) {
+              return DropdownMenuItem(value: opt, child: Text(opt));
+            }).toList(),
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showItemOptions(ClothingItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: NetworkImage(item.imagePath),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${item.color} ${item.category}', style: theme.textTheme.titleLarge),
+                        Text('${item.season}  •  Giyme Sayısı: ${item.usageCount}', style: theme.textTheme.bodyMedium),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 32),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text('Kıyafeti Sil', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Provider.of<WardrobeState>(context, listen: false).deleteItem(item.id);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final wardrobe = Provider.of<WardrobeState>(context);
+    
+    // Filter list
+    final filteredItems = wardrobe.items.where((item) {
+      if (_selectedCategory == 'Tümü') return true;
+      return item.category == _selectedCategory;
+    }).toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          'Dijital Gardırop',
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            onPressed: () {},
+          )
+        ],
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // Filter chip list
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _categories.length,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemBuilder: (context, index) {
+                final cat = _categories[index];
+                final isSelected = _selectedCategory == cat;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: ChoiceChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    selectedColor: theme.primaryColor,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.black : theme.textTheme.bodyLarge?.color,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    backgroundColor: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.02),
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _selectedCategory = cat);
+                      }
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Items grid
+          Expanded(
+            child: filteredItems.isEmpty
+                ? Center(
+                    child: Text(
+                      'Bu kategoride kıyafetiniz bulunmuyor.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      return GestureDetector(
+                        onTap: () => _showItemOptions(item),
+                        child: Card(
+                          margin: EdgeInsets.zero,
+                          clipBehavior: Clip.antiAlias,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: Image.network(
+                                  item.imagePath,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey.withOpacity(0.1),
+                                      child: Icon(Icons.checkroom, color: theme.primaryColor),
+                                    );
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${item.color} ${item.category}',
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      '${item.style} • ${item.season}',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddClothingDialog,
+        backgroundColor: theme.primaryColor,
+        foregroundColor: Colors.black,
+        icon: const Icon(Icons.add),
+        label: const Text('Kıyafet Ekle'),
+      ),
+    );
+  }
+}
