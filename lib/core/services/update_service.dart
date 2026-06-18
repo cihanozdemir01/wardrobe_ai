@@ -18,7 +18,7 @@ class AppUpdateInfo {
 
 class UpdateService {
   // CONFIGURATION: Set your GitHub username and repository name here
-  static const String githubUser = 'ozdem'; 
+  static const String githubUser = 'cihanozdemir01'; 
   static const String githubRepo = 'wardrobe_ai';
   
   // Current version of the app installed locally
