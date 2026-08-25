@@ -523,3 +523,148 @@ class OpenAIServiceImpl implements AIService {
     }
   }
 }
+
+class GeminiAIServiceImpl implements AIService {
+  final String apiKey;
+
+  GeminiAIServiceImpl({required this.apiKey});
+
+  @override
+  Future<ClothingAnalysisResult> analyzeClothingImage(String imagePath) async {
+    return MockAIService().analyzeClothingImage(imagePath);
+  }
+
+  @override
+  Future<OutfitAnalysisResult> analyzeOutfitPhoto(String imagePath, UserProfile profile) async {
+    return MockAIService().analyzeOutfitPhoto(imagePath, profile);
+  }
+
+  @override
+  Future<String> getChatRecommendation(String message, List<ClothingItem> wardrobe, UserProfile profile) async {
+    try {
+      final wardrobeSummary = wardrobe.map((item) => {
+        'id': item.id,
+        'category': item.category,
+        'color': item.color,
+        'season': item.season,
+        'style': item.style,
+      }).toList();
+
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {
+                  'text': 'Kullanıcı Sorusu: $message\n\n'
+                      'Kullanıcı Gardırobu:\n${jsonEncode(wardrobeSummary)}\n\n'
+                      'Kullanıcı Profili:\n- Tarz: ${profile.stylePreference}\n- Yaş: ${profile.age}\n\n'
+                      'Lütfen kullanıcıya gardırobuna uygun tarz tavsiyesi ve kombin ipuçları ver. Yanıtı Türkçe ve samimi bir dille yaz.'
+                }
+              ]
+            }
+          ]
+        }),
+      ).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        return resData['candidates'][0]['content']['parts'][0]['text'] as String;
+      }
+      throw Exception('Gemini Chat API Error');
+    } catch (e) {
+      return MockAIService().getChatRecommendation(message, wardrobe, profile);
+    }
+  }
+
+  @override
+  Future<Combination> getOutfitRecommendation(WeatherData weather, List<ClothingItem> wardrobe, UserProfile profile, {String type = 'Daily'}) async {
+    try {
+      final wardrobeSummary = wardrobe.map((item) => {
+        'id': item.id,
+        'category': item.category,
+        'color': item.color,
+        'pattern': item.pattern,
+        'fabricType': item.fabricType,
+        'season': item.season,
+        'style': item.style,
+      }).toList();
+
+      final prompt = 'Sen premium bir yapay zeka stil danışmanısın. Sana sunulan hava durumuna, kullanıcının profiline ve gardırobundaki kıyafet listesine göre en uyumlu kombinasyonu seçmelisin. Cevabı Türkçe ve JSON formatında döndür.\n\n'
+          'Kullanıcı Profili:\n'
+          '- Yaş: ${profile.age}\n'
+          '- Cinsiyet: ${profile.gender}\n'
+          '- Tarz: ${profile.stylePreference}\n'
+          '- Çalışma Tarzı: ${profile.workStyle}\n\n'
+          'Hava Durumu:\n'
+          '- Sıcaklık: ${weather.temperature}°C (Hissedilen: ${weather.feelsLike}°C)\n'
+          '- Durum: ${weather.condition}\n'
+          '- Yağış İhtimali: %${weather.rainProbability}\n\n'
+          'Kombin Türü: $type\n\n'
+          'Mevcut Gardırop Listesi (JSON):\n${jsonEncode(wardrobeSummary)}\n\n'
+          'Lütfen bu gardıroptan 1 adet Üst (Tişört veya Gömlek), 1 adet Alt (Pantolon veya Şort) ve 1 adet Ayakkabı seç. Eğer hava soğuksa (< 18°C) ek olarak 1 adet Dış Giyim (Mont veya Ceket) seçebilirsin. İstersen 1 adet Aksesuar da ekleyebilirsin. Seçtiğin kıyafetlerin id değerlerini döndürmelisin.\n\n'
+          'Cevabı şu JSON şemasına uygun olarak döndür:\n'
+          '{\n'
+          '  "selected_item_ids": ["id1", "id2", "id3"],\n'
+          '  "harmony_score": 95,\n'
+          '  "season_suitability": "Çok Uygun",\n'
+          '  "formality_level": "Smart Casual",\n'
+          '  "description": "Neden bu kombini seçtiğine dair Türkçe açıklama."\n'
+          '}';
+
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ],
+          'generationConfig': {
+            'responseMimeType': 'application/json'
+          }
+        }),
+      ).timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        String text = resData['candidates'][0]['content']['parts'][0]['text'] as String;
+        
+        text = text.trim();
+        if (text.startsWith('```json')) {
+          text = text.substring(7, text.length - 3).trim();
+        } else if (text.startsWith('```')) {
+          text = text.substring(3, text.length - 3).trim();
+        }
+
+        final parsed = jsonDecode(text);
+        final List<dynamic> ids = parsed['selected_item_ids'] ?? [];
+        final selectedItems = wardrobe.where((item) => ids.contains(item.id)).toList();
+
+        if (selectedItems.isEmpty) {
+          throw Exception('Eşleşen kıyafet bulunamadı');
+        }
+
+        return Combination(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          items: selectedItems,
+          harmonyScore: parsed['harmony_score'] ?? 85,
+          seasonSuitability: parsed['season_suitability'] ?? 'Çok Uygun',
+          formalityLevel: parsed['formality_level'] ?? 'Casual',
+          type: type,
+          description: parsed['description'] ?? 'Gemini tarafından özel seçilmiş kombin.',
+        );
+      } else {
+        throw Exception('Gemini status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Gemini API combination failed, falling back to mock: $e");
+      return MockAIService().getOutfitRecommendation(weather, wardrobe, profile, type: type);
+    }
+  }
+}

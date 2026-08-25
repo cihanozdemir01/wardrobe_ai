@@ -109,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showApiKeyDialog() {
     final state = Provider.of<WardrobeState>(context, listen: false);
     final openAiController = TextEditingController(text: state.openAiApiKey ?? '');
+    final geminiController = TextEditingController(text: state.geminiApiKey ?? '');
     final githubController = TextEditingController(text: state.githubToken ?? '');
 
     showDialog(
@@ -129,9 +130,25 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('Google Gemini API Anahtarı', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Önerileri tamamen ücretsiz üretmek için Google AI Studio Gemini API anahtarınızı girin.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: geminiController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'AIzaSyxxxxxxxxxxxxxxxxxxxxxxxx',
+                    labelText: 'Gemini API Key',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
                 Text('OpenAI API Anahtarı', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                const Text('Yapay zeka kombin önerilerini gerçek zamanlı OpenAI kullanarak üretmek için API anahtarınızı girin.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const Text('Önerileri OpenAI gpt-4o-mini ile üretmek için API anahtarınızı girin.', style: TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: openAiController,
@@ -169,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton(
               onPressed: () async {
                 await state.saveApiKey(openAiController.text.trim());
+                await state.saveGeminiApiKey(geminiController.text.trim());
                 await state.saveGithubToken(githubController.text.trim());
                 if (mounted) {
                   Navigator.pop(context);

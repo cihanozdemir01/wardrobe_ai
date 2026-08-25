@@ -13,6 +13,7 @@ class WardrobeState extends ChangeNotifier {
   List<String> _historyLog = []; // Format: "yyyy-MM-dd:item1Id,item2Id..."
   bool _isLoading = false;
   String? _openAiApiKey;
+  String? _geminiApiKey;
   String? _githubToken = ''; // Enter token in app settings for private repository updates
 
   final WeatherService _weatherService = MockWeatherService();
@@ -22,11 +23,17 @@ class WardrobeState extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isOnboarded => _profile != null;
   String? get openAiApiKey => _openAiApiKey;
+  String? get geminiApiKey => _geminiApiKey;
   String? get githubToken => _githubToken;
 
-  AIService get _aiService => (_openAiApiKey != null && _openAiApiKey!.isNotEmpty)
-      ? OpenAIServiceImpl(apiKey: _openAiApiKey!)
-      : MockAIService();
+  AIService get _aiService {
+    if (_geminiApiKey != null && _geminiApiKey!.isNotEmpty) {
+      return GeminiAIServiceImpl(apiKey: _geminiApiKey!);
+    } else if (_openAiApiKey != null && _openAiApiKey!.isNotEmpty) {
+      return OpenAIServiceImpl(apiKey: _openAiApiKey!);
+    }
+    return MockAIService();
+  }
 
   // Constructor
   WardrobeState() {
@@ -62,6 +69,9 @@ class WardrobeState extends ChangeNotifier {
       
       // Load OpenAI API Key
       _openAiApiKey = prefs.getString('openai_api_key');
+
+      // Load Gemini API Key
+      _geminiApiKey = prefs.getString('gemini_api_key');
 
       // Load GitHub Access Token
       _githubToken = prefs.getString('github_token') ?? '';
@@ -101,6 +111,18 @@ class WardrobeState extends ChangeNotifier {
       await prefs.remove('openai_api_key');
     } else {
       await prefs.setString('openai_api_key', key);
+    }
+    notifyListeners();
+  }
+
+  // Save Gemini API Key
+  Future<void> saveGeminiApiKey(String? key) async {
+    _geminiApiKey = key;
+    final prefs = await SharedPreferences.getInstance();
+    if (key == null || key.isEmpty) {
+      await prefs.remove('gemini_api_key');
+    } else {
+      await prefs.setString('gemini_api_key', key);
     }
     notifyListeners();
   }
