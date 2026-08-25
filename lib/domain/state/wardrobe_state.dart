@@ -312,7 +312,7 @@ class WardrobeState extends ChangeNotifier {
     return [
       ClothingItem(
         id: '1',
-        imagePath: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500',
+        imagePath: 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Tişört',
         color: 'Siyah',
         pattern: 'Düz',
@@ -324,7 +324,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '2',
-        imagePath: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500',
+        imagePath: 'https://images.pexels.com/photos/3772506/pexels-photo-3772506.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Gömlek',
         color: 'Beyaz',
         pattern: 'Düz',
@@ -336,7 +336,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '3',
-        imagePath: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500',
+        imagePath: 'https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Pantolon',
         color: 'Lacivert',
         pattern: 'Düz',
@@ -348,7 +348,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '4',
-        imagePath: 'https://images.unsplash.com/photo-1479064555552-3ef4979f8908?w=500',
+        imagePath: 'https://images.pexels.com/photos/2068349/pexels-photo-2068349.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Pantolon',
         color: 'Bej',
         pattern: 'Düz',
@@ -360,7 +360,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '5',
-        imagePath: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500',
+        imagePath: 'https://images.pexels.com/photos/1464625/pexels-photo-1464625.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Ayakkabı',
         color: 'Beyaz',
         pattern: 'Düz',
@@ -372,7 +372,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '6',
-        imagePath: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=500',
+        imagePath: 'https://images.pexels.com/photos/9834884/pexels-photo-9834884.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Ceket',
         color: 'Siyah',
         pattern: 'Düz',
@@ -384,7 +384,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '7',
-        imagePath: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=500',
+        imagePath: 'https://images.pexels.com/photos/11038283/pexels-photo-11038283.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Şort',
         color: 'Gri',
         pattern: 'Düz',
@@ -396,7 +396,7 @@ class WardrobeState extends ChangeNotifier {
       ),
       ClothingItem(
         id: '8',
-        imagePath: 'https://images.unsplash.com/photo-1513838279014-a89f7a76ae86?w=500',
+        imagePath: 'https://images.pexels.com/photos/13050849/pexels-photo-13050849.jpeg?auto=compress&cs=tinysrgb&w=500',
         category: 'Aksesuar',
         color: 'Siyah',
         pattern: 'Düz',
