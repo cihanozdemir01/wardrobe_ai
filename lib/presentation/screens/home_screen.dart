@@ -42,7 +42,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkForUpdates() async {
-    final updateInfo = await UpdateService.checkForUpdates();
+    final state = Provider.of<WardrobeState>(context, listen: false);
+    final updateInfo = await UpdateService.checkForUpdates(token: state.githubToken);
     if (updateInfo.isUpdateAvailable && mounted) {
       _showUpdateDialog(updateInfo);
     }
@@ -107,7 +108,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showApiKeyDialog() {
     final state = Provider.of<WardrobeState>(context, listen: false);
-    final controller = TextEditingController(text: state.openAiApiKey ?? '');
+    final openAiController = TextEditingController(text: state.openAiApiKey ?? '');
+    final githubController = TextEditingController(text: state.githubToken ?? '');
 
     showDialog(
       context: context,
@@ -117,27 +119,47 @@ class _HomeScreenState extends State<HomeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: Row(
             children: [
-              Icon(Icons.vpn_key_rounded, color: theme.primaryColor),
+              Icon(Icons.settings_suggest_rounded, color: theme.primaryColor),
               const SizedBox(width: 12),
-              const Text('OpenAI API Anahtarı'),
+              const Text('API & Entegrasyon'),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Yapay zeka kombin önerilerini gerçek zamanlı OpenAI API kullanarak üretmek için API anahtarınızı girin.'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx',
-                  labelText: 'API Key',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('OpenAI API Anahtarı', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Yapay zeka kombin önerilerini gerçek zamanlı OpenAI kullanarak üretmek için API anahtarınızı girin.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: openAiController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx',
+                    labelText: 'OpenAI API Key',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 12),
+                Text('GitHub Erişim Anahtarı', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text('Özel deponuzdan (Private) yeni sürüm güncellemelerini çekmek için erişim anahtarınızı (Token) girin.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: githubController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxx',
+                    labelText: 'GitHub PAT Token',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -146,18 +168,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                await state.saveApiKey(controller.text.trim());
+                await state.saveApiKey(openAiController.text.trim());
+                await state.saveGithubToken(githubController.text.trim());
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(controller.text.trim().isEmpty 
-                          ? 'API anahtarı temizlendi. Mock servise geçildi.' 
-                          : 'API anahtarı kaydedildi!'),
+                    const SnackBar(
+                      content: Text('Ayarlar başarıyla kaydedildi!'),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                   _fetchWeatherAndRecommendation();
+                  _checkForUpdates();
                 }
               },
               child: const Text('Kaydet'),

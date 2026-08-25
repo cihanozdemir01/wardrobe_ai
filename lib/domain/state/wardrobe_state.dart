@@ -13,6 +13,7 @@ class WardrobeState extends ChangeNotifier {
   List<String> _historyLog = []; // Format: "yyyy-MM-dd:item1Id,item2Id..."
   bool _isLoading = false;
   String? _openAiApiKey;
+  String? _githubToken = ''; // Enter token in app settings for private repository updates
 
   final WeatherService _weatherService = MockWeatherService();
 
@@ -21,6 +22,7 @@ class WardrobeState extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isOnboarded => _profile != null;
   String? get openAiApiKey => _openAiApiKey;
+  String? get githubToken => _githubToken;
 
   AIService get _aiService => (_openAiApiKey != null && _openAiApiKey!.isNotEmpty)
       ? OpenAIServiceImpl(apiKey: _openAiApiKey!)
@@ -60,6 +62,9 @@ class WardrobeState extends ChangeNotifier {
       
       // Load OpenAI API Key
       _openAiApiKey = prefs.getString('openai_api_key');
+
+      // Load GitHub Access Token
+      _githubToken = prefs.getString('github_token') ?? '';
     } catch (e) {
       debugPrint("Error loading preferences: $e");
     } finally {
@@ -96,6 +101,18 @@ class WardrobeState extends ChangeNotifier {
       await prefs.remove('openai_api_key');
     } else {
       await prefs.setString('openai_api_key', key);
+    }
+    notifyListeners();
+  }
+
+  // Save GitHub Access Token
+  Future<void> saveGithubToken(String? token) async {
+    _githubToken = token;
+    final prefs = await SharedPreferences.getInstance();
+    if (token == null || token.isEmpty) {
+      await prefs.remove('github_token');
+    } else {
+      await prefs.setString('github_token', token);
     }
     notifyListeners();
   }
