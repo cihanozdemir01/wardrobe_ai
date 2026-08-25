@@ -1244,6 +1244,46 @@ class _HomeScreenState extends State<HomeScreen> {
                             Image.network(
                               modelPhoto,
                               fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: SpinKitDoubleBounce(
+                                    color: theme.primaryColor,
+                                    size: 40.0,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[950],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.wifi_off_rounded,
+                                          size: 60,
+                                          color: theme.primaryColor.withOpacity(0.6),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Görsel Yüklenemedi',
+                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 24),
+                                          child: Text(
+                                            'İnternet bağlantınızı kontrol edin. Unsplash görsellerine erişilemiyor.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(color: Colors.white54, fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                             // Gradient overlay
                             Positioned.fill(
