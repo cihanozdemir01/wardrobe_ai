@@ -22,7 +22,7 @@ class UpdateService {
   static const String githubRepo = 'wardrobe_ai';
   
   // Current version of the app installed locally
-  static const String currentVersion = 'v1.0.2';
+  static const String currentVersion = 'v1.0.3';
 
   /// Checks if a newer release is available on GitHub
   static Future<AppUpdateInfo> checkForUpdates() async {

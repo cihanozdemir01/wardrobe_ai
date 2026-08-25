@@ -547,14 +547,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    child: const Text('Mark as Worn Today'),
+                    child: const Text('Bugün Bu Kombini Giydim'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showModelPreviewDialog(_dailyCombination!),
+                    icon: const Icon(Icons.face_retouching_natural_rounded),
+                    label: const Text('Model Üzerinde Gör'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 OutlinedButton(
                   onPressed: _fetchWeatherAndRecommendation,
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -1031,7 +1049,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       wardrobeState.recordWearToday(tempCombo);
-                      
                       setState(() {
                         _selectedManualTop = null;
                         _selectedManualBottom = null;
@@ -1057,6 +1074,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: const Text('Bu Kombini Giydim'),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showModelPreviewDialog(tempCombo),
+                    icon: const Icon(Icons.face_retouching_natural_rounded),
+                    label: const Text('Model Üzerinde Gör'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 OutlinedButton(
                   onPressed: () {
@@ -1067,7 +1102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     });
                   },
                   style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -1114,5 +1149,152 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return min(100, max(40, score));
+  }
+
+  void _showModelPreviewDialog(Combination combo) {
+    final theme = Theme.of(context);
+
+    // Determine a model photo based on style and category
+    String modelPhoto = 'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=600'; // Default smart casual/beige chinos white shirt
+    
+    final hasSuit = combo.items.any((i) => i.style == 'Klasik' || i.category == 'Gömlek');
+    final hasSport = combo.items.any((i) => i.style == 'Spor' || i.category == 'Şort');
+    
+    if (combo.formalityLevel.contains('Resmi') || hasSuit) {
+      modelPhoto = 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600'; // Suite/Formal
+    } else if (combo.formalityLevel.contains('Spor') || hasSport) {
+      modelPhoto = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600'; // Sporty / Street style
+    } else if (combo.items.any((i) => i.color == 'Siyah' && i.category == 'Tişört')) {
+      modelPhoto = 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600'; // Black t-shirt casual look
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool loading = true;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            if (loading) {
+              Future.delayed(const Duration(milliseconds: 1500), () {
+                if (context.mounted) {
+                  setDialogState(() {
+                    loading = false;
+                  });
+                }
+              });
+            }
+
+            return AlertDialog(
+              backgroundColor: theme.cardColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              contentPadding: EdgeInsets.zero,
+              content: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: SizedBox(
+                  width: 320,
+                  height: 480,
+                  child: loading
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SpinKitDoubleBounce(
+                              color: theme.primaryColor,
+                              size: 60.0,
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Kıyafetler Giydiriliyor...',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'AI Modeliniz hazırlanıyor',
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            ),
+                          ],
+                        )
+                      : Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              modelPhoto,
+                              fit: BoxFit.cover,
+                            ),
+                            // Gradient overlay
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withOpacity(0.8),
+                                    ],
+                                    stops: const [0.6, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 24,
+                              left: 20,
+                              right: 20,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'AI Model Görünümü',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '${combo.type} - Uyum Skoru: %${combo.harmonyScore}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    combo.items.map((i) => "${i.color} ${i.category}").join(', '),
+                                    style: TextStyle(
+                                      color: theme.primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: CircleAvatar(
+                                backgroundColor: Colors.black.withOpacity(0.5),
+                                child: IconButton(
+                                  icon: const Icon(Icons.close, color: Colors.white),
+                                  onPressed: () => Navigator.pop(context),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }
