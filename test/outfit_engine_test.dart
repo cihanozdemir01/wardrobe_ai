@@ -25,7 +25,7 @@ void main() {
       expect(wardrobeState.items.length, greaterThanOrEqualTo(8));
     });
 
-    test('Outfit Recommendation filters items correctly based on hot temperature', () {
+    test('Outfit Recommendation filters items correctly based on hot temperature', () async {
       final hotWeather = WeatherData(
         temperature: 30.0,
         feelsLike: 31.0,
@@ -35,7 +35,7 @@ void main() {
         cityName: 'TestCity',
       );
 
-      final recommendation = wardrobeState.generateOutfitRecommendation(hotWeather);
+      final recommendation = await wardrobeState.generateOutfitRecommendation(hotWeather);
 
       // Verify that no heavy coats or jackets are in the recommendation when hot
       final containsHeavyLayers = recommendation.items.any((item) => 
@@ -44,7 +44,7 @@ void main() {
       expect(containsHeavyLayers, isFalse);
     });
 
-    test('Outfit Recommendation filters items correctly based on cold temperature', () {
+    test('Outfit Recommendation filters items correctly based on cold temperature', () async {
       final coldWeather = WeatherData(
         temperature: 8.0,
         feelsLike: 5.0,
@@ -54,7 +54,7 @@ void main() {
         cityName: 'TestCity',
       );
 
-      final recommendation = wardrobeState.generateOutfitRecommendation(coldWeather);
+      final recommendation = await wardrobeState.generateOutfitRecommendation(coldWeather);
 
       // Verify that no shorts are in the recommendation when cold
       final containsShorts = recommendation.items.any((item) => item.category == 'Şort');

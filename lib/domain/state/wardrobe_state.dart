@@ -7,27 +7,30 @@ import '../../core/services/weather_service.dart';
 import '../../data/models/clothing_item.dart';
 import '../../data/models/combination.dart';
 import '../../data/models/user_profile.dart';
-
 class WardrobeState extends ChangeNotifier {
   UserProfile? _profile;
   List<ClothingItem> _items = [];
   List<String> _historyLog = []; // Format: "yyyy-MM-dd:item1Id,item2Id..."
   bool _isLoading = false;
+  String? _openAiApiKey;
 
   final WeatherService _weatherService = MockWeatherService();
-  final AIService _aiService = MockAIService();
 
   UserProfile? get profile => _profile;
   List<ClothingItem> get items => _items;
   bool get isLoading => _isLoading;
   bool get isOnboarded => _profile != null;
+  String? get openAiApiKey => _openAiApiKey;
+
+  AIService get _aiService => (_openAiApiKey != null && _openAiApiKey!.isNotEmpty)
+      ? OpenAIServiceImpl(apiKey: _openAiApiKey!)
+      : MockAIService();
 
   // Constructor
   WardrobeState() {
     _loadFromPrefs();
   }
 
-  // Load state from SharedPreferences
   Future<void> _loadFromPrefs() async {
     _isLoading = true;
     notifyListeners();
@@ -54,6 +57,9 @@ class WardrobeState extends ChangeNotifier {
 
       // Load History Log
       _historyLog = prefs.getStringList('wear_history') ?? [];
+      
+      // Load OpenAI API Key
+      _openAiApiKey = prefs.getString('openai_api_key');
     } catch (e) {
       debugPrint("Error loading preferences: $e");
     } finally {
@@ -80,6 +86,18 @@ class WardrobeState extends ChangeNotifier {
   Future<void> _saveHistoryToPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('wear_history', _historyLog);
+  }
+
+  // Save OpenAI API Key
+  Future<void> saveApiKey(String? key) async {
+    _openAiApiKey = key;
+    final prefs = await SharedPreferences.getInstance();
+    if (key == null || key.isEmpty) {
+      await prefs.remove('openai_api_key');
+    } else {
+      await prefs.setString('openai_api_key', key);
+    }
+    notifyListeners();
   }
 
   // Add Item to Wardrobe
@@ -130,161 +148,13 @@ class WardrobeState extends ChangeNotifier {
   }
 
   // Combination Engine Logic
-  Combination generateOutfitRecommendation(WeatherData weather, {String type = 'Daily'}) {
-    if (_items.isEmpty) {
-      return Combination(
-        id: 'empty',
-        items: [],
-        harmonyScore: 0,
-        seasonSuitability: 'N/A',
-        formalityLevel: 'N/A',
-        type: type,
-        description: 'Gardırobunuzda henüz kıyafet bulunmuyor.',
-      );
-    }
-
-    // 1. Filter out items based on weather temperature
-    final temp = weather.temperature;
-    
-    List<ClothingItem> candidates = _items;
-
-    // Filter by season appropriateness
-    if (temp > 25) {
-      // Hot Weather: Exclude heavy layers, long boots, kış items
-      candidates = candidates.where((i) => 
-        i.season != 'Kış' && 
-        i.category != 'Mont' && 
-        i.category != 'Ceket' &&
-        i.fabricType != 'Yün' &&
-        i.fabricType != 'Deri'
-      ).toList();
-    } else if (temp < 12) {
-      // Cold Weather: Exclude shorts, lightweight linen, yaz items
-      candidates = candidates.where((i) => 
-        i.season != 'Yaz' && 
-        i.category != 'Şort' &&
-        i.fabricType != 'Keten'
-      ).toList();
-    }
-
-    // Segregate categories
-    List<ClothingItem> tops = candidates.where((i) => i.category == 'Tişört' || i.category == 'Gömlek').toList();
-    List<ClothingItem> bottoms = candidates.where((i) => i.category == 'Pantolon' || i.category == 'Şort').toList();
-    List<ClothingItem> shoes = candidates.where((i) => i.category == 'Ayakkabı').toList();
-    List<ClothingItem> outer = candidates.where((i) => i.category == 'Ceket' || i.category == 'Mont').toList();
-    List<ClothingItem> accessories = candidates.where((i) => i.category == 'Aksesuar').toList();
-
-    // Check fallback if category lists are empty
-    if (tops.isEmpty) tops = _items.where((i) => i.category == 'Tişört' || i.category == 'Gömlek').toList();
-    if (bottoms.isEmpty) bottoms = _items.where((i) => i.category == 'Pantolon' || i.category == 'Şort').toList();
-    if (shoes.isEmpty) shoes = _items.where((i) => i.category == 'Ayakkabı').toList();
-
-    // Prioritize least worn items / not worn in last 3 days
-    final now = DateTime.now();
-    
-    double getPriorityScore(ClothingItem item) {
-      double score = 100.0;
-      // Penalty for usage count
-      score -= item.usageCount * 5.0;
-      // Penalty for being worn recently
-      if (item.lastWorn != null) {
-        final daysSinceWorn = now.difference(item.lastWorn!).inDays;
-        if (daysSinceWorn < 3) {
-          score -= (4 - daysSinceWorn) * 20.0; // Heavy penalty if worn yesterday or today
-        }
-      }
-      // Bonus if it matches user style preference
-      if (_profile != null && item.style.toLowerCase() == _profile!.stylePreference.toLowerCase()) {
-        score += 20.0;
-      }
-      return score;
-    }
-
-    // Sort lists by priority
-    tops.sort((a, b) => getPriorityScore(b).compareTo(getPriorityScore(a)));
-    bottoms.sort((a, b) => getPriorityScore(b).compareTo(getPriorityScore(a)));
-    shoes.sort((a, b) => getPriorityScore(b).compareTo(getPriorityScore(a)));
-    outer.sort((a, b) => getPriorityScore(b).compareTo(getPriorityScore(a)));
-    accessories.sort((a, b) => getPriorityScore(b).compareTo(getPriorityScore(a)));
-
-    // Choose top matching items
-    final selectedTop = tops.isNotEmpty ? tops.first : null;
-    final selectedBottom = bottoms.isNotEmpty ? bottoms.first : null;
-    final selectedShoe = shoes.isNotEmpty ? shoes.first : null;
-
-    final List<ClothingItem> outfitItems = [];
-    if (selectedTop != null) outfitItems.add(selectedTop);
-    if (selectedBottom != null) outfitItems.add(selectedBottom);
-    if (selectedShoe != null) outfitItems.add(selectedShoe);
-
-    // Weather based outer layer inclusion
-    if (temp < 18) {
-      // Recommend Jacket or Coat
-      if (temp < 10) {
-        final coat = outer.firstWhere((i) => i.category == 'Mont', orElse: () => outer.isNotEmpty ? outer.first : _items.firstWhere((i) => i.category == 'Mont', orElse: () => _items.first));
-        if (coat.category == 'Mont' || coat.category == 'Ceket') outfitItems.add(coat);
-      } else {
-        final jacket = outer.firstWhere((i) => i.category == 'Ceket', orElse: () => outer.isNotEmpty ? outer.first : _items.firstWhere((i) => i.category == 'Ceket', orElse: () => _items.first));
-        if (jacket.category == 'Ceket' || jacket.category == 'Mont') outfitItems.add(jacket);
-      }
-    }
-
-    // Add accessory if available
-    if (accessories.isNotEmpty) {
-      outfitItems.add(accessories.first);
-    }
-
-    // Calculate details
-    int harmony = 85;
-    if (selectedTop != null && selectedBottom != null) {
-      // Basic color harmony rule
-      final topColor = selectedTop.color.toLowerCase();
-      final bottomColor = selectedBottom.color.toLowerCase();
-      if ((topColor == 'siyah' || topColor == 'beyaz') || (bottomColor == 'siyah' || bottomColor == 'beyaz')) {
-        harmony += 10;
-      } else if (topColor == 'lacivert' && bottomColor == 'bej') {
-        harmony += 12;
-      } else if (topColor == 'gri' && bottomColor == 'siyah') {
-        harmony += 10;
-      } else {
-        harmony -= 5;
-      }
-    }
-    harmony = min(100, max(50, harmony));
-
-    String formality = 'Casual';
-    if (type == 'İş Kombini') {
-      formality = 'Resmi / Smart Casual';
-    } else if (type == 'Akşam Kombini') {
-      formality = 'Smart Casual';
-    } else if (type == 'Hafta Sonu Kombini') {
-      formality = 'Spor / Rahat';
-    } else {
-      formality = _profile?.stylePreference ?? 'Casual';
-    }
-
-    String seasonSuit = 'Çok Uygun';
-    if (temp > 25 && outfitItems.any((i) => i.season == 'Kış')) {
-      seasonSuit = 'Düşük';
-    }
-
-    String turkishType = 'Günlük Kombin';
-    if (type == 'İş Kombini') {
-      turkishType = 'İş Kombini';
-    } else if (type == 'Akşam Kombini') {
-      turkishType = 'Akşam Kombini';
-    } else if (type == 'Hafta Sonu Kombini') {
-      turkishType = 'Hafta Sonu Kombini';
-    }
-
-    return Combination(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      items: outfitItems,
-      harmonyScore: harmony,
-      seasonSuitability: seasonSuit,
-      formalityLevel: formality,
-      type: turkishType,
-      description: "Bugünkü hava durumuna (${temp}°C) ve kişisel tarzınıza göre özenle seçilmiştir. ${selectedTop?.color} ve ${selectedBottom?.color} renk blokları dengeli bir görsel uyum yakalıyor.",
+  // Combination Engine Logic
+  Future<Combination> generateOutfitRecommendation(WeatherData weather, {String type = 'Daily'}) async {
+    return _aiService.getOutfitRecommendation(
+      weather,
+      _items,
+      _profile ?? UserProfile(name: 'Stil Sahibi', age: 25, gender: 'Belirtilmedi', height: 175, weight: 70, workStyle: 'Ofis', stylePreference: 'Casual'),
+      type: type,
     );
   }
 
