@@ -43,6 +43,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _checkForUpdates() async {
     final state = Provider.of<WardrobeState>(context, listen: false);
+    
+    // Wait for WardrobeState to finish loading from SharedPreferences (race condition fix)
+    int retries = 0;
+    while (state.isLoading && retries < 15) {
+      await Future.delayed(const Duration(milliseconds: 150));
+      retries++;
+    }
+
     final updateInfo = await UpdateService.checkForUpdates(token: state.githubToken);
     if (updateInfo.isUpdateAvailable && mounted) {
       _showUpdateDialog(updateInfo);
