@@ -21,7 +21,6 @@ class _HomeScreenCategory {
 
 class _WardrobeScreenState extends State<WardrobeScreen> {
   String _selectedCategory = 'Tümü';
-  final AIService _aiService = MockAIService();
 
   final List<String> _categories = [
     'Tümü',
@@ -172,7 +171,8 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             onPressed: () async {
                               setModalState(() => analyzing = true);
                               
-                              final result = await _aiService.analyzeClothingImage(mockImgPath);
+                              final aiService = Provider.of<WardrobeState>(context, listen: false).aiService;
+                              final result = await aiService.analyzeClothingImage(mockImgPath);
                               
                               setModalState(() {
                                 category = result.category;

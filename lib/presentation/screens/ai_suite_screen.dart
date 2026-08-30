@@ -12,7 +12,6 @@ class AISuiteScreen extends StatefulWidget {
 }
 
 class _AISuiteScreenState extends State<AISuiteScreen> {
-  final AIService _aiService = MockAIService();
   bool _analyzingOutfit = false;
   OutfitAnalysisResult? _analysisResult;
   String _uploadImagePath = 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default model photo (Using Pexels)
@@ -35,7 +34,7 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
     });
 
     final state = Provider.of<WardrobeState>(context, listen: false);
-    final result = await _aiService.analyzeOutfitPhoto(_uploadImagePath, state.profile!);
+    final result = await state.aiService.analyzeOutfitPhoto(_uploadImagePath, state.profile!);
 
     setState(() {
       _analysisResult = result;
@@ -54,7 +53,7 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
     });
 
     final state = Provider.of<WardrobeState>(context, listen: false);
-    final response = await _aiService.getChatRecommendation(text, state.items, state.profile!);
+    final response = await state.aiService.getChatRecommendation(text, state.items, state.profile!);
 
     setState(() {
       _chatMessages.add({'sender': 'ai', 'text': response});

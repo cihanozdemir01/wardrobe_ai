@@ -26,7 +26,7 @@ class WardrobeState extends ChangeNotifier {
   String? get geminiApiKey => _geminiApiKey;
   String? get githubToken => _githubToken;
 
-  AIService get _aiService {
+  AIService get aiService {
     if (_geminiApiKey != null && _geminiApiKey!.isNotEmpty) {
       return GeminiAIServiceImpl(apiKey: _geminiApiKey!);
     } else if (_openAiApiKey != null && _openAiApiKey!.isNotEmpty) {
@@ -189,7 +189,7 @@ class WardrobeState extends ChangeNotifier {
   // Combination Engine Logic
   // Combination Engine Logic
   Future<Combination> generateOutfitRecommendation(WeatherData weather, {String type = 'Daily'}) async {
-    return _aiService.getOutfitRecommendation(
+    return aiService.getOutfitRecommendation(
       weather,
       _items,
       _profile ?? UserProfile(name: 'Stil Sahibi', age: 25, gender: 'Belirtilmedi', height: 175, weight: 70, workStyle: 'Ofis', stylePreference: 'Casual'),
