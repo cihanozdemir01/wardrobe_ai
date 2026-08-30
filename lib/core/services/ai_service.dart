@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../data/models/clothing_item.dart';
@@ -531,12 +532,172 @@ class GeminiAIServiceImpl implements AIService {
 
   @override
   Future<ClothingAnalysisResult> analyzeClothingImage(String imagePath) async {
-    return MockAIService().analyzeClothingImage(imagePath);
+    try {
+      List<int> bytes;
+      String mimeType = 'image/jpeg';
+      if (imagePath.startsWith('http')) {
+        final res = await http.get(
+          Uri.parse(imagePath),
+          headers: const {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          },
+        );
+        bytes = res.bodyBytes;
+        if (imagePath.toLowerCase().endsWith('.png')) {
+          mimeType = 'image/png';
+        }
+      } else {
+        final file = File(imagePath);
+        bytes = await file.readAsBytes();
+        if (imagePath.toLowerCase().endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (imagePath.toLowerCase().endsWith('.webp')) {
+          mimeType = 'image/webp';
+        }
+      }
+      final base64Data = base64Encode(bytes);
+
+      final prompt = 'Bu kıyafet resmini analiz et. Bana JSON formatında tam olarak şu alanları içeren bir nesne döndür:\n'
+          '{\n'
+          '  "category": "Tişört" veya "Gömlek" veya "Pantolon" veya "Şort" veya "Ceket" veya "Mont" veya "Ayakkabı" veya "Aksesuar" seçeneklerinden biri,\n'
+          '  "color": "Siyah", "Beyaz", "Bej", "Lacivert", "Gri", "Haki", "Bordo", "Kırmızı", "Mavi", "Sarı" seçeneklerinden en uygun olan tek bir Türkçe renk adı,\n'
+          '  "pattern": "Düz", "Çizgili", "Kareli", "Desenli", "Baskılı" seçeneklerinden biri,\n'
+          '  "fabricType": "Pamuk", "Keten", "Denim", "Deri", "Yün", "Süet" seçeneklerinden biri,\n'
+          '  "season": "Yaz", "Kış", "İlkbahar/Sonbahar", "Mevsimsiz" seçeneklerinden biri,\n'
+          '  "style": "Klasik", "Casual", "Smart Casual", "Spor" seçeneklerinden biri\n'
+          '}';
+
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt},
+                {
+                  'inlineData': {
+                    'mimeType': mimeType,
+                    'data': base64Data
+                  }
+                }
+              ]
+            }
+          ],
+          'generationConfig': {
+            'responseMimeType': 'application/json'
+          }
+        }),
+      ).timeout(const Duration(seconds: 25));
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        String text = resData['candidates'][0]['content']['parts'][0]['text'] as String;
+        final parsed = jsonDecode(text.trim());
+
+        return ClothingAnalysisResult(
+          category: parsed['category'] ?? 'Tişört',
+          color: parsed['color'] ?? 'Siyah',
+          pattern: parsed['pattern'] ?? 'Düz',
+          fabricType: parsed['fabricType'] ?? 'Pamuk',
+          season: parsed['season'] ?? 'Yaz',
+          style: parsed['style'] ?? 'Casual',
+        );
+      } else {
+        throw Exception('Gemini status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Gemini clothing image analysis failed, falling back to mock: $e");
+      return MockAIService().analyzeClothingImage(imagePath);
+    }
   }
 
   @override
   Future<OutfitAnalysisResult> analyzeOutfitPhoto(String imagePath, UserProfile profile) async {
-    return MockAIService().analyzeOutfitPhoto(imagePath, profile);
+    try {
+      List<int> bytes;
+      String mimeType = 'image/jpeg';
+      if (imagePath.startsWith('http')) {
+        final res = await http.get(
+          Uri.parse(imagePath),
+          headers: const {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          },
+        );
+        bytes = res.bodyBytes;
+        if (imagePath.toLowerCase().endsWith('.png')) {
+          mimeType = 'image/png';
+        }
+      } else {
+        final file = File(imagePath);
+        bytes = await file.readAsBytes();
+        if (imagePath.toLowerCase().endsWith('.png')) {
+          mimeType = 'image/png';
+        } else if (imagePath.toLowerCase().endsWith('.webp')) {
+          mimeType = 'image/webp';
+        }
+      }
+      final base64Data = base64Encode(bytes);
+
+      final prompt = 'Bu kombin / model fotoğrafını kullanıcının şu profil tercihlerine göre analiz et:\n'
+          '- Tarz Tercihi: ${profile.stylePreference}\n'
+          '- Yaş: ${profile.age}\n- Cinsiyet: ${profile.gender}\n- İş Tarzı: ${profile.workStyle}\n\n'
+          'Bana JSON formatında tam olarak şu alanları içeren bir nesne döndür:\n'
+          '{\n'
+          '  "score": 0-100 arası uyum puanı tam sayı,\n'
+          '  "color_harmony": "Renk uyumu hakkında detaylı Türkçe değerlendirme (1-2 cümle)",\n'
+          '  "style_harmony": "Tarz ve resmiyet seviyesi uyumu hakkında detaylı Türkçe değerlendirme (1-2 cümle)",\n'
+          '  "season_suitability": "Mevsim ve kumaş uygunluğu hakkında Türkçe değerlendirme (1-2 cümle)",\n'
+          '  "body_type_suitability": "Kullanıcının profil ölçülerine göre kalıp/kesim uygunluğu hakkında Türkçe değerlendirme (1-2 cümle)",\n'
+          '  "suggestions": ["Daha iyi bir görünüm için 1. Türkçe öneri", "2. Türkçe öneri", "3. Türkçe öneri"]\n'
+          '}';
+
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt},
+                {
+                  'inlineData': {
+                    'mimeType': mimeType,
+                    'data': base64Data
+                  }
+                }
+              ]
+            }
+          ],
+          'generationConfig': {
+            'responseMimeType': 'application/json'
+          }
+        }),
+      ).timeout(const Duration(seconds: 25));
+
+      if (response.statusCode == 200) {
+        final resData = jsonDecode(response.body);
+        String text = resData['candidates'][0]['content']['parts'][0]['text'] as String;
+        final parsed = jsonDecode(text.trim());
+
+        return OutfitAnalysisResult(
+          score: parsed['score'] ?? 80,
+          colorHarmony: parsed['color_harmony'] ?? 'Renk tonları uyumlu görünüyor.',
+          styleHarmony: parsed['style_harmony'] ?? 'Tarz tercihinize uygun bir duruşu var.',
+          seasonSuitability: parsed['season_suitability'] ?? 'Mevsim geçişleri için uygun.',
+          bodyTypeSuitability: parsed['body_type_suitability'] ?? 'Proporsiyonunuza uygun bir kesim.',
+          suggestions: List<String>.from(parsed['suggestions'] ?? [
+            'Aksesuarlarla kombini zenginleştirebilirsiniz.',
+            'Renk dengesine dikkat edebilirsiniz.'
+          ]),
+        );
+      } else {
+        throw Exception('Gemini status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("Gemini outfit analysis failed, falling back to mock: $e");
+      return MockAIService().analyzeOutfitPhoto(imagePath, profile);
+    }
   }
 
   @override

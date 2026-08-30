@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../domain/state/wardrobe_state.dart';
 import '../../core/services/ai_service.dart';
 
@@ -12,6 +14,33 @@ class AISuiteScreen extends StatefulWidget {
 }
 
 class _AISuiteScreenState extends State<AISuiteScreen> {
+  ImageProvider _getUniversalImageProvider(String path) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return NetworkImage(
+        path,
+        headers: const {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      );
+    } else {
+      return FileImage(File(path));
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(source: source, maxWidth: 1000, maxHeight: 1000, imageQuality: 85);
+      if (image != null) {
+        setState(() {
+          _uploadImagePath = image.path;
+        });
+      }
+    } catch (e) {
+      debugPrint("Görsel seçme hatası: $e");
+    }
+  }
+
   bool _analyzingOutfit = false;
   OutfitAnalysisResult? _analysisResult;
   String _uploadImagePath = 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default model photo (Using Pexels)
@@ -359,12 +388,7 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     image: DecorationImage(
-                      image: NetworkImage(
-                        _uploadImagePath,
-                        headers: const {
-                          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                        },
-                      ),
+                      image: _getUniversalImageProvider(_uploadImagePath),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -388,14 +412,49 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
                       const SizedBox(height: 8),
                       OutlinedButton(
                         onPressed: () {
-                          // Toggle sample picture
-                          setState(() {
-                            _uploadImagePath = _uploadImagePath.contains('291762')
-                                ? 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500' // alternative
-                                : 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500';
-                          });
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (subContext) {
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ListTile(
+                                      leading: const Icon(Icons.photo_library),
+                                      title: const Text('Galeriden Kombin Fotoğrafı Seç'),
+                                      onTap: () {
+                                        Navigator.pop(subContext);
+                                        _pickImage(ImageSource.gallery);
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: const Icon(Icons.camera_alt),
+                                      title: const Text('Kamera ile Kombin Fotoğrafı Çek'),
+                                      onTap: () {
+                                        Navigator.pop(subContext);
+                                        _pickImage(ImageSource.camera);
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: const Icon(Icons.image_search),
+                                      title: const Text('Varsayılan Stok Görsele Geç'),
+                                      onTap: () {
+                                        Navigator.pop(subContext);
+                                        setState(() {
+                                          _uploadImagePath = _uploadImagePath.contains('291762')
+                                              ? 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500'
+                                              : 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500';
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
                         },
-                        child: const Text('Fotoğraf Değiştir'),
+                        child: const Text('Fotoğraf Yükle/Değiştir'),
                       ),
                     ],
                   ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../data/models/clothing_item.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../domain/state/wardrobe_state.dart';
 import '../../core/services/ai_service.dart';
 
@@ -21,6 +23,57 @@ class _HomeScreenCategory {
 
 class _WardrobeScreenState extends State<WardrobeScreen> {
   String _selectedCategory = 'Tümü';
+
+  ImageProvider _getUniversalImageProvider(String path) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return NetworkImage(
+        path,
+        headers: const {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      );
+    } else {
+      return FileImage(File(path));
+    }
+  }
+
+  Widget _buildUniversalImage(String path, {BoxFit fit = BoxFit.cover, Widget? errorWidget}) {
+    if (path.isEmpty) {
+      return errorWidget ?? const Icon(Icons.image_not_supported_outlined);
+    }
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return Image.network(
+        path,
+        fit: fit,
+        headers: const {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ?? const Icon(Icons.image_not_supported_outlined);
+        },
+      );
+    } else {
+      return Image.file(
+        File(path),
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ?? const Icon(Icons.image_not_supported_outlined);
+        },
+      );
+    }
+  }
+
+  Future<void> _pickImage(ImageSource source, StateSetter setModalState, Function(String) onPicked) async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(source: source, maxWidth: 1000, maxHeight: 1000, imageQuality: 85);
+      if (image != null) {
+        onPicked(image.path);
+      }
+    } catch (e) {
+      debugPrint("Görsel seçme hatası: $e");
+    }
+  }
 
   final List<String> _categories = [
     'Tümü',
@@ -144,12 +197,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                               borderRadius: BorderRadius.circular(20),
                               color: Colors.grey.withOpacity(0.1),
                               image: DecorationImage(
-                                image: NetworkImage(
-                                  mockImgPath,
-                                  headers: const {
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                                  },
-                                ),
+                                image: _getUniversalImageProvider(mockImgPath),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -163,10 +211,53 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                               child: IconButton(
                                 icon: const Icon(Icons.camera_alt, size: 16, color: Colors.black),
                                 onPressed: () {
-                                  // Switch to a blue shirt image mock
-                                  setModalState(() {
-                                    mockImgPath = 'https://images.pexels.com/photos/3772506/pexels-photo-3772506.jpeg?auto=compress&cs=tinysrgb&w=500';
-                                  });
+                                  showModalBottomSheet(
+                                    context: context,
+                                    builder: (subContext) {
+                                      return Container(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            ListTile(
+                                              leading: const Icon(Icons.photo_library),
+                                              title: const Text('Galeriden Fotoğraf Seç'),
+                                              onTap: () {
+                                                Navigator.pop(subContext);
+                                                _pickImage(ImageSource.gallery, setModalState, (path) {
+                                                  setModalState(() {
+                                                    mockImgPath = path;
+                                                  });
+                                                });
+                                              },
+                                            ),
+                                            ListTile(
+                                              leading: const Icon(Icons.camera_alt),
+                                              title: const Text('Kamera ile Fotoğraf Çek'),
+                                              onTap: () {
+                                                Navigator.pop(subContext);
+                                                _pickImage(ImageSource.camera, setModalState, (path) {
+                                                  setModalState(() {
+                                                    mockImgPath = path;
+                                                  });
+                                                });
+                                              },
+                                            ),
+                                            ListTile(
+                                              leading: const Icon(Icons.image_search),
+                                              title: const Text('Varsayılan Stok Görsele Sıfırla'),
+                                              onTap: () {
+                                                Navigator.pop(subContext);
+                                                setModalState(() {
+                                                  mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                                                });
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
                                 },
                               ),
                             ),
@@ -313,12 +404,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       image: DecorationImage(
-                        image: NetworkImage(
-                          item.imagePath,
-                          headers: const {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                          },
-                        ),
+                        image: _getUniversalImageProvider(item.imagePath),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -446,18 +532,13 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                child: Image.network(
+                                child: _buildUniversalImage(
                                   item.imagePath,
                                   fit: BoxFit.cover,
-                                  headers: const {
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      child: Icon(Icons.checkroom, color: theme.primaryColor),
-                                    );
-                                  },
+                                  errorWidget: Container(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    child: Icon(Icons.checkroom, color: theme.primaryColor),
+                                  ),
                                 ),
                               ),
                               Padding(

@@ -11,6 +11,7 @@ import '../../core/services/update_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:io';
 
 
 
@@ -22,6 +23,32 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  Widget _buildUniversalImage(String path, {BoxFit fit = BoxFit.cover, Widget? errorWidget}) {
+    if (path.isEmpty) {
+      return errorWidget ?? const Icon(Icons.image_not_supported_outlined);
+    }
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return Image.network(
+        path,
+        fit: fit,
+        headers: const {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ?? const Icon(Icons.image_not_supported_outlined);
+        },
+      );
+    } else {
+      return Image.file(
+        File(path),
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return errorWidget ?? const Icon(Icons.image_not_supported_outlined);
+        },
+      );
+    }
+  }
+
   WeatherData? _weather;
   Combination? _dailyCombination;
   bool _loadingWeather = true;
@@ -1139,19 +1166,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Expanded(
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
+                                      child: _buildUniversalImage(
                                         item.imagePath,
                                         fit: BoxFit.cover,
-                                        headers: const {
-                                          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                                        },
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Icon(
-                                            Icons.image_not_supported_outlined,
-                                            size: 20,
-                                            color: theme.primaryColor.withOpacity(0.4),
-                                          );
-                                        },
+                                        errorWidget: Icon(
+                                          Icons.image_not_supported_outlined,
+                                          size: 20,
+                                          color: theme.primaryColor.withOpacity(0.4),
+                                        ),
                                       ),
                                     ),
                                   ),

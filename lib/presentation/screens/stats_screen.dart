@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../domain/state/wardrobe_state.dart';
 import '../../data/models/clothing_item.dart';
 import '../../core/services/update_service.dart';
+import 'dart:io';
 import 'onboarding_screen.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -14,6 +15,19 @@ class StatsScreen extends StatefulWidget {
 }
 
 class _StatsScreenState extends State<StatsScreen> {
+  ImageProvider _getUniversalImageProvider(String path) {
+    if (path.startsWith('http') || path.startsWith('https')) {
+      return NetworkImage(
+        path,
+        headers: const {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      );
+    } else {
+      return FileImage(File(path));
+    }
+  }
+
   int _touchedIndex = -1;
 
   @override
@@ -346,12 +360,7 @@ class _StatsScreenState extends State<StatsScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               image: DecorationImage(
-                image: NetworkImage(
-                  item.imagePath,
-                  headers: const {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                  },
-                ),
+                image: _getUniversalImageProvider(item.imagePath),
                 fit: BoxFit.cover,
               ),
             ),
