@@ -15,7 +15,7 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
   final AIService _aiService = MockAIService();
   bool _analyzingOutfit = false;
   OutfitAnalysisResult? _analysisResult;
-  String _uploadImagePath = 'https://picsum.photos/500/500?random=30'; // Default model photo (Using Picsum)
+  String _uploadImagePath = 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default model photo (Using Pexels)
   
   // Chat stylist fields
   final TextEditingController _chatController = TextEditingController();
@@ -360,7 +360,12 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     image: DecorationImage(
-                      image: NetworkImage(_uploadImagePath),
+                      image: NetworkImage(
+                        _uploadImagePath,
+                        headers: const {
+                          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        },
+                      ),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -386,9 +391,9 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
                         onPressed: () {
                           // Toggle sample picture
                           setState(() {
-                            _uploadImagePath = _uploadImagePath.contains('random=30')
-                                ? 'https://picsum.photos/500/500?random=31' // alternative (Using Picsum)
-                                : 'https://picsum.photos/500/500?random=30';
+                            _uploadImagePath = _uploadImagePath.contains('291762')
+                                ? 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500' // alternative
+                                : 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500';
                           });
                         },
                         child: const Text('Fotoğraf Değiştir'),

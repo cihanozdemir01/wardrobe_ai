@@ -1135,6 +1135,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: Image.network(
                                         item.imagePath,
                                         fit: BoxFit.cover,
+                                        headers: const {
+                                          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                                        },
                                         errorBuilder: (context, error, stackTrace) {
                                           return Icon(
                                             Icons.image_not_supported_outlined,
@@ -1350,18 +1353,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showModelPreviewDialog(Combination combo) {
     final theme = Theme.of(context);
 
-    // Determine a model photo based on style and category (Using Picsum for highest network compatibility)
-    String modelPhoto = 'https://picsum.photos/600/900?random=19'; // Default smart casual
+    // Determine a model photo based on style and category (Using Pexels with User-Agent header)
+    String modelPhoto = 'https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?auto=compress&cs=tinysrgb&w=600'; // Default smart casual
     
     final hasSuit = combo.items.any((i) => i.style == 'Klasik' || i.category == 'Gömlek');
     final hasSport = combo.items.any((i) => i.style == 'Spor' || i.category == 'Şort');
     
     if (combo.formalityLevel.contains('Resmi') || hasSuit) {
-      modelPhoto = 'https://picsum.photos/600/900?random=20'; // Suite/Formal
+      modelPhoto = 'https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=600'; // Suite/Formal
     } else if (combo.formalityLevel.contains('Spor') || hasSport) {
-      modelPhoto = 'https://picsum.photos/600/900?random=21'; // Sporty / Street style
+      modelPhoto = 'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg?auto=compress&cs=tinysrgb&w=600'; // Sporty / Street style
     } else if (combo.items.any((i) => i.color == 'Siyah' && i.category == 'Tişört')) {
-      modelPhoto = 'https://picsum.photos/600/900?random=22'; // Black t-shirt casual look
+      modelPhoto = 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=600'; // Black t-shirt casual look
     }
 
     showDialog(
@@ -1418,6 +1421,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Image.network(
                               modelPhoto,
                               fit: BoxFit.cover,
+                              headers: const {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                              },
                               loadingBuilder: (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return Center(

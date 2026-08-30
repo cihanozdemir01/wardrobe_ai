@@ -36,7 +36,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   ];
 
   void _showAddClothingDialog() {
-    String mockImgPath = 'https://picsum.photos/500/500?random=11'; // Default black tshirt mockup (Using Picsum)
+    String mockImgPath = 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default black tshirt mockup (Using Pexels)
     bool analyzing = false;
 
     // AI parsed form fields
@@ -104,7 +104,12 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                               borderRadius: BorderRadius.circular(20),
                               color: Colors.grey.withOpacity(0.1),
                               image: DecorationImage(
-                                image: NetworkImage(mockImgPath),
+                                image: NetworkImage(
+                                  mockImgPath,
+                                  headers: const {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                                  },
+                                ),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -120,7 +125,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 onPressed: () {
                                   // Switch to a blue shirt image mock
                                   setModalState(() {
-                                    mockImgPath = 'https://picsum.photos/500/500?random=12';
+                                    mockImgPath = 'https://images.pexels.com/photos/3772506/pexels-photo-3772506.jpeg?auto=compress&cs=tinysrgb&w=500';
                                   });
                                 },
                               ),
@@ -260,7 +265,12 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       image: DecorationImage(
-                        image: NetworkImage(item.imagePath),
+                        image: NetworkImage(
+                          item.imagePath,
+                          headers: const {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                          },
+                        ),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -391,6 +401,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 child: Image.network(
                                   item.imagePath,
                                   fit: BoxFit.cover,
+                                  headers: const {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                                  },
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       color: Colors.grey.withOpacity(0.1),
