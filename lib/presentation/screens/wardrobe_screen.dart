@@ -35,8 +35,32 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
     'Aksesuar'
   ];
 
+  String _getMockImageForCategoryAndColor(String category, String color) {
+    switch (category) {
+      case 'Tişört':
+        if (color == 'Siyah') {
+          return 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=500'; // Black t-shirt
+        }
+        return 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500'; // White t-shirt
+      case 'Gömlek':
+        return 'https://images.pexels.com/photos/3772506/pexels-photo-3772506.jpeg?auto=compress&cs=tinysrgb&w=500'; // White shirt
+      case 'Pantolon':
+        return 'https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?auto=compress&cs=tinysrgb&w=500'; // Jeans
+      case 'Şort':
+        return 'https://images.pexels.com/photos/11038283/pexels-photo-11038283.jpeg?auto=compress&cs=tinysrgb&w=500'; // Shorts
+      case 'Ceket':
+      case 'Mont':
+        return 'https://images.pexels.com/photos/9834884/pexels-photo-9834884.jpeg?auto=compress&cs=tinysrgb&w=500'; // Jacket
+      case 'Ayakkabı':
+        return 'https://images.pexels.com/photos/1464625/pexels-photo-1464625.jpeg?auto=compress&cs=tinysrgb&w=500'; // Sneakers
+      case 'Aksesuar':
+      default:
+        return 'https://images.pexels.com/photos/13050849/pexels-photo-13050849.jpeg?auto=compress&cs=tinysrgb&w=500'; // Watch
+    }
+  }
+
   void _showAddClothingDialog() {
-    String mockImgPath = 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default black tshirt mockup (Using Pexels)
+    String mockImgPath = 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default black tshirt mockup (Using Pexels)
     bool analyzing = false;
 
     // AI parsed form fields
@@ -157,6 +181,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 fabric = result.fabricType;
                                 season = result.season;
                                 style = result.style;
+                                mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
                                 analyzing = false;
                               });
                             },
@@ -167,10 +192,16 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
 
                     // Classification Form
                     _buildFormDropdown('Kategori', category, _categories.where((c) => c != 'Tümü').toList(), (val) {
-                      setModalState(() => category = val);
+                      setModalState(() {
+                        category = val;
+                        mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                      });
                     }),
                     _buildFormDropdown('Renk', color, ['Siyah', 'Beyaz', 'Bej', 'Lacivert', 'Gri', 'Haki', 'Bordo', 'Kırmızı', 'Mavi', 'Sarı'], (val) {
-                      setModalState(() => color = val);
+                      setModalState(() {
+                        color = val;
+                        mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                      });
                     }),
                     _buildFormDropdown('Desen', pattern, ['Düz', 'Çizgili', 'Kareli', 'Desenli', 'Baskılı'], (val) {
                       setModalState(() => pattern = val);
