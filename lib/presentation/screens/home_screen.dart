@@ -1558,6 +1558,42 @@ class _HomeScreenState extends State<HomeScreen> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    height: 55,
+                                    child: ListView.builder(
+                                      scrollDirection: Axis.horizontal,
+                                      itemCount: combo.items.length,
+                                      itemBuilder: (context, idx) {
+                                        final item = combo.items[idx];
+                                        return Padding(
+                                          padding: const EdgeInsets.only(right: 8.0),
+                                          child: Tooltip(
+                                            message: '${item.color} ${item.category}',
+                                            child: Container(
+                                              width: 44,
+                                              height: 55,
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: Colors.white.withOpacity(0.6), width: 1.5),
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: _buildUniversalImage(
+                                                  item.imagePath,
+                                                  fit: BoxFit.cover,
+                                                  errorWidget: Container(
+                                                    color: Colors.grey[850],
+                                                    child: const Icon(Icons.checkroom, color: Colors.white70, size: 16),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),

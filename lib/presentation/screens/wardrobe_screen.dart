@@ -289,7 +289,9 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 fabric = result.fabricType;
                                 season = result.season;
                                 style = result.style;
-                                mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                                if (mockImgPath.startsWith('http')) {
+                                  mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                                }
                                 analyzing = false;
                               });
                             },
@@ -302,13 +304,17 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                     _buildFormDropdown('Kategori', category, _categories.where((c) => c != 'Tümü').toList(), (val) {
                       setModalState(() {
                         category = val;
-                        mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                        if (mockImgPath.startsWith('http')) {
+                          mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                        }
                       });
                     }),
                     _buildFormDropdown('Renk', color, ['Siyah', 'Beyaz', 'Bej', 'Lacivert', 'Gri', 'Haki', 'Bordo', 'Kırmızı', 'Mavi', 'Sarı'], (val) {
                       setModalState(() {
                         color = val;
-                        mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                        if (mockImgPath.startsWith('http')) {
+                          mockImgPath = _getMockImageForCategoryAndColor(category ?? 'Tişört', color ?? 'Siyah');
+                        }
                       });
                     }),
                     _buildFormDropdown('Desen', pattern, ['Düz', 'Çizgili', 'Kareli', 'Desenli', 'Baskılı'], (val) {
