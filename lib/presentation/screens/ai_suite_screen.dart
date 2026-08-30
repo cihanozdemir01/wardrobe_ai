@@ -15,7 +15,7 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
   final AIService _aiService = MockAIService();
   bool _analyzingOutfit = false;
   OutfitAnalysisResult? _analysisResult;
-  String _uploadImagePath = 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default model photo (Using Pexels)
+  String _uploadImagePath = 'https://picsum.photos/500/500?random=30'; // Default model photo (Using Picsum)
   
   // Chat stylist fields
   final TextEditingController _chatController = TextEditingController();
@@ -386,9 +386,9 @@ class _AISuiteScreenState extends State<AISuiteScreen> {
                         onPressed: () {
                           // Toggle sample picture
                           setState(() {
-                            _uploadImagePath = _uploadImagePath.contains('291762')
-                                ? 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500' // alternative (Using Pexels)
-                                : 'https://images.pexels.com/photos/291762/pexels-photo-291762.jpeg?auto=compress&cs=tinysrgb&w=500';
+                            _uploadImagePath = _uploadImagePath.contains('random=30')
+                                ? 'https://picsum.photos/500/500?random=31' // alternative (Using Picsum)
+                                : 'https://picsum.photos/500/500?random=30';
                           });
                         },
                         child: const Text('Fotoğraf Değiştir'),

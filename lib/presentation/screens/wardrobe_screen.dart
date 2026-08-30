@@ -36,7 +36,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   ];
 
   void _showAddClothingDialog() {
-    String mockImgPath = 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500'; // Default black tshirt mockup (Using Pexels)
+    String mockImgPath = 'https://picsum.photos/500/500?random=11'; // Default black tshirt mockup (Using Picsum)
     bool analyzing = false;
 
     // AI parsed form fields
@@ -120,7 +120,7 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
                                 onPressed: () {
                                   // Switch to a blue shirt image mock
                                   setModalState(() {
-                                    mockImgPath = 'https://images.pexels.com/photos/3772506/pexels-photo-3772506.jpeg?auto=compress&cs=tinysrgb&w=500';
+                                    mockImgPath = 'https://picsum.photos/500/500?random=12';
                                   });
                                 },
                               ),
