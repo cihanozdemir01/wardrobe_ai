@@ -35,15 +35,32 @@ class _WardrobeScreenState extends State<WardrobeScreen> {
   ];
 
   String _getMockImageForCategoryAndColor(String category, String color) {
+    final normColor = color.toLowerCase().trim();
     switch (category) {
       case 'Tişört':
-        if (color == 'Siyah') {
+        if (normColor == 'siyah') {
           return 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=500'; // Black t-shirt
+        } else if (normColor == 'lacivert' || normColor == 'mavi') {
+          return 'https://images.pexels.com/photos/1232459/pexels-photo-1232459.jpeg?auto=compress&cs=tinysrgb&w=500'; // Blue t-shirt
+        } else if (normColor == 'kırmızı' || normColor == 'bordo') {
+          return 'https://images.pexels.com/photos/2294342/pexels-photo-2294342.jpeg?auto=compress&cs=tinysrgb&w=500'; // Red t-shirt
+        } else if (normColor == 'gri') {
+          return 'https://images.pexels.com/photos/428338/pexels-photo-428338.jpeg?auto=compress&cs=tinysrgb&w=500'; // Grey t-shirt
+        } else if (normColor == 'haki' || normColor == 'yeşil') {
+          return 'https://images.pexels.com/photos/5693889/pexels-photo-5693889.jpeg?auto=compress&cs=tinysrgb&w=500'; // Green/Khaki t-shirt
+        } else if (normColor == 'bej' || normColor == 'sarı') {
+          return 'https://images.pexels.com/photos/3053824/pexels-photo-3053824.jpeg?auto=compress&cs=tinysrgb&w=500'; // Beige t-shirt
         }
         return 'https://images.pexels.com/photos/991509/pexels-photo-991509.jpeg?auto=compress&cs=tinysrgb&w=500'; // White t-shirt
       case 'Gömlek':
+        if (normColor == 'siyah') {
+          return 'https://images.pexels.com/photos/1040855/pexels-photo-1040855.jpeg?auto=compress&cs=tinysrgb&w=500'; // Black shirt
+        }
         return 'https://images.pexels.com/photos/3772506/pexels-photo-3772506.jpeg?auto=compress&cs=tinysrgb&w=500'; // White shirt
       case 'Pantolon':
+        if (normColor == 'bej') {
+          return 'https://images.pexels.com/photos/2068349/pexels-photo-2068349.jpeg?auto=compress&cs=tinysrgb&w=500'; // Beige pants
+        }
         return 'https://images.pexels.com/photos/1598507/pexels-photo-1598507.jpeg?auto=compress&cs=tinysrgb&w=500'; // Jeans
       case 'Şort':
         return 'https://images.pexels.com/photos/11038283/pexels-photo-11038283.jpeg?auto=compress&cs=tinysrgb&w=500'; // Shorts

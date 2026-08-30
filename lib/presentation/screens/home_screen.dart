@@ -1368,20 +1368,24 @@ class _HomeScreenState extends State<HomeScreen> {
     
     // Find top clothing item to match color (Tişört or Gömlek)
     final topItem = combo.items.firstWhere(
-      (i) => i.category == 'Tişört' || i.category == 'Gömlek',
+      (i) => i.category.toLowerCase().trim() == 'tişört' || i.category.toLowerCase().trim() == 'gömlek',
       orElse: () => combo.items.isNotEmpty ? combo.items.first : ClothingItem(
         id: '', imagePath: '', category: '', color: '', pattern: '', fabricType: '', season: '', style: '',
       ),
     );
 
-    if (combo.formalityLevel.contains('Resmi') || hasSuit) {
+    final topColor = topItem.color.toLowerCase().trim();
+    final topCategory = topItem.category.toLowerCase().trim();
+    final formality = combo.formalityLevel.toLowerCase().trim();
+
+    if (formality.contains('resmi') || hasSuit) {
       modelPhoto = 'https://images.pexels.com/photos/3785079/pexels-photo-3785079.jpeg?auto=compress&cs=tinysrgb&w=600'; // Suite/Formal
-    } else if (combo.formalityLevel.contains('Spor') || hasSport) {
+    } else if (formality.contains('spor') || hasSport) {
       modelPhoto = 'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg?auto=compress&cs=tinysrgb&w=600'; // Sporty / Street style
-    } else if (topItem.color == 'Siyah' && (topItem.category == 'Tişört' || topItem.category == 'Ceket')) {
+    } else if (topColor == 'siyah' && (topCategory == 'tişört' || topCategory == 'ceket')) {
       modelPhoto = 'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg?auto=compress&cs=tinysrgb&w=600'; // Black t-shirt casual look
-    } else if (topItem.color == 'Beyaz' || topItem.color == 'Bej') {
-      modelPhoto = 'https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?auto=compress&cs=tinysrgb&w=600'; // White/Beige top casual look
+    } else if (topColor == 'beyaz' || topColor == 'bej' || topColor == 'mavi' || topColor == 'lacivert' || topColor == 'gri') {
+      modelPhoto = 'https://images.pexels.com/photos/2983464/pexels-photo-2983464.jpeg?auto=compress&cs=tinysrgb&w=600'; // White/Beige/Blue/Grey top casual look
     }
 
     showDialog(
