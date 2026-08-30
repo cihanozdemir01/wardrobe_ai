@@ -491,7 +491,7 @@ class OpenAIServiceImpl implements AIService {
             }
           ]
         }),
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
         final resData = jsonDecode(response.body);
@@ -567,7 +567,7 @@ class GeminiAIServiceImpl implements AIService {
             }
           ]
         }),
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
         final resData = jsonDecode(response.body);
@@ -629,7 +629,7 @@ class GeminiAIServiceImpl implements AIService {
             'responseMimeType': 'application/json'
           }
         }),
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 25));
 
       if (response.statusCode == 200) {
         final resData = jsonDecode(response.body);

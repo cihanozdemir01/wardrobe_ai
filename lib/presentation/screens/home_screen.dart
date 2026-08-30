@@ -302,7 +302,7 @@ class _HomeScreenState extends State<HomeScreen> {
         body: jsonEncode({
           'contents': [{'parts': [{'text': 'Test connection. Respond with OK.'}]}]
         }),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -329,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'model': 'gpt-4o-mini',
           'messages': [{'role': 'user', 'content': 'Test. Respond with OK.'}]
         }),
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -350,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
-      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 5));
+      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

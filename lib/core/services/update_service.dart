@@ -22,7 +22,7 @@ class UpdateService {
   static const String githubRepo = 'wardrobe_ai';
   
   // Current version of the app installed locally
-  static const String currentVersion = 'v1.1.6';
+  static const String currentVersion = 'v1.1.7';
 
   /// Checks if a newer release is available on GitHub
   static Future<AppUpdateInfo> checkForUpdates({String? token}) async {
@@ -32,7 +32,7 @@ class UpdateService {
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
-      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 5));
+      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
