@@ -103,6 +103,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 final uri = Uri.parse(info.downloadUrl);
                 if (await canLaunchUrl(uri)) {
                   await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Güncelleme (.apk) tarayıcınızda indiriliyor. İndirme bittiğinde İndirilenler klasöründen kurabilirsiniz.'),
+                        duration: Duration(seconds: 8),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                 }
                 if (mounted) {
                   Navigator.pop(context);
