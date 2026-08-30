@@ -151,7 +151,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.offline_bolt_rounded, size: 16),
+                    label: const Text('Gemini Bağlantısını Test Et', style: TextStyle(fontSize: 11)),
+                    onPressed: () => _testConnection('Gemini API', () => _testGeminiConnection(geminiController.text.trim())),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 const Divider(),
                 const SizedBox(height: 12),
                 Text('OpenAI API Anahtarı', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -167,7 +176,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.offline_bolt_rounded, size: 16),
+                    label: const Text('OpenAI Bağlantısını Test Et', style: TextStyle(fontSize: 11)),
+                    onPressed: () => _testConnection('OpenAI API', () => _testOpenAiConnection(openAiController.text.trim())),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 const Divider(),
                 const SizedBox(height: 12),
                 Text('GitHub Erişim Anahtarı', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -181,6 +199,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     hintText: 'ghp_xxxxxxxxxxxxxxxxxxxxxxxx',
                     labelText: 'GitHub PAT Token',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.offline_bolt_rounded, size: 16),
+                    label: const Text('GitHub Bağlantısını Test Et', style: TextStyle(fontSize: 11)),
+                    onPressed: () => _testConnection('GitHub API', () => _testGithubConnection(githubController.text.trim())),
                   ),
                 ),
               ],
@@ -214,6 +241,116 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  Future<void> _testConnection(String name, Future<String> Function() testFn) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    final result = await testFn();
+    
+    if (mounted) {
+      Navigator.pop(context); // Close loading
+      
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded, color: Colors.amber),
+              const SizedBox(width: 8),
+              Text('$name Testi'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Text(result),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<String> _testGeminiConnection(String apiKey) async {
+    if (apiKey.isEmpty) return 'Lütfen önce geçerli bir API anahtarı girin.';
+    try {
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [{'parts': [{'text': 'Test connection. Respond with OK.'}]}]
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final text = data['candidates'][0]['content']['parts'][0]['text'] as String;
+        return 'Bağlantı Başarılı!\nGemini Yanıtı: ${text.trim()}';
+      } else {
+        return 'Hata Kodu: ${response.statusCode}\n\nSunucu Yanıtı:\n${response.body}';
+      }
+    } catch (e) {
+      return 'Bağlantı Hatası:\n$e';
+    }
+  }
+
+  Future<String> _testOpenAiConnection(String apiKey) async {
+    if (apiKey.isEmpty) return 'Lütfen önce geçerli bir API anahtarı girin.';
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.openai.com/v1/chat/completions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode({
+          'model': 'gpt-4o-mini',
+          'messages': [{'role': 'user', 'content': 'Test. Respond with OK.'}]
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final text = data['choices'][0]['message']['content'] as String;
+        return 'Bağlantı Başarılı!\nOpenAI Yanıtı: ${text.trim()}';
+      } else {
+        return 'Hata Kodu: ${response.statusCode}\n\nSunucu Yanıtı:\n${response.body}';
+      }
+    } catch (e) {
+      return 'Bağlantı Hatası:\n$e';
+    }
+  }
+
+  Future<String> _testGithubConnection(String token) async {
+    try {
+      final url = 'https://api.github.com/repos/cihanozdemir01/wardrobe_ai/releases/latest';
+      final headers = <String, String>{};
+      if (token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+      final response = await http.get(Uri.parse(url), headers: headers).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final latestTag = data['tag_name'] as String? ?? 'Bilinmiyor';
+        return 'Bağlantı Başarılı!\nDepo Sürümü: $latestTag\n\n(Bu token ile özel deponuzdan güncelleme çekebilirsiniz.)';
+      } else {
+        return 'Hata Kodu: ${response.statusCode}\n\nSunucu Yanıtı:\n${response.body}';
+      }
+    } catch (e) {
+      return 'Bağlantı Hatası:\n$e';
+    }
   }
 
   Future<void> _fetchWeatherAndRecommendation() async {
