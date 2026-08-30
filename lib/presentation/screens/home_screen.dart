@@ -221,6 +221,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () => _testConnection('GitHub API', () => _testGithubConnection(githubController.text.trim())),
                   ),
                 ),
+                const SizedBox(height: 16),
+                const Center(
+                  child: Text(
+                    'Uygulama Sürümü: ${UpdateService.currentVersion}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ],
             ),
           ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../domain/state/wardrobe_state.dart';
 import '../../data/models/clothing_item.dart';
+import '../../core/services/update_service.dart';
 import 'onboarding_screen.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -129,6 +130,13 @@ class _StatsScreenState extends State<StatsScreen> {
                       onTap: () {},
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: Text(
+                  'Uygulama Sürümü: ${UpdateService.currentVersion}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: 40),
